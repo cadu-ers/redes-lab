@@ -113,3 +113,52 @@ git clone <repo-do-grupo> && cd <repo> && make up E=2 && make verificar E=2
 
 Os roteiros imprimem o valor observado em cada ponto, não só passou/falhou —
 dá para corrigir lendo a saída.
+
+---
+
+## Entrega 1 — Plano de endereçamento
+
+**Sub-redes usadas:**
+
+| Segmento | Sub-rede | Máscara | Endereços totais | Hosts utilizáveis |
+|---|---|---|---|---|
+| A | `10.0.10.0/24` | 255.255.255.0 | 256 | 254 |
+| B | `10.0.20.0/24` | 255.255.255.0 | 256 | 254 |
+
+Uma `/24` reserva 8 bits para hosts (2⁸ = 256 endereços), mas **dois** desses
+256 nunca podem ser atribuídos a uma máquina: o primeiro (`.0`) é o *endereço
+de rede*, que identifica a sub-rede como um todo nas tabelas de roteamento —
+não uma máquina dentro dela; o último (`.255`) é o *endereço de broadcast*,
+usado para mandar um pacote a todos os hosts da sub-rede de uma vez, não a um
+host específico. Por isso sobram 254 endereços utilizáveis por sub-rede
+(256 − 2).
+
+**Atribuição de endereços:**
+
+| Máquina | Segmento | Endereço |
+|---|---|---|
+| `host-a1` | A | `10.0.10.10` |
+| `host-a2` | A | `10.0.10.11` |
+| `srv-a`   | A | `10.0.10.20` |
+| `host-b1` | B | `10.0.20.10` |
+| `host-b2` | B | `10.0.20.11` |
+
+## Por que A não alcança B
+
+Cada segmento é uma rede *bridge* própria e isolada do Docker
+(`seg-a` e `seg-b`), e cada contêiner só tem uma interface de rede, conectada
+a **um** desses dois segmentos — nunca aos dois ao mesmo tempo. Além disso, a
+rota padrão de cada contêiner foi removida de propósito
+(`ip route del default`).
+
+Isso significa que, do ponto de vista de um host em A, simplesmente **não
+existe rota** na tabela de roteamento para `10.0.20.0/24` — não é um
+firewall bloqueando, é a ausência real de um caminho de camada 3 entre as
+duas sub-redes. Por isso o erro que aparece é `Network is unreachable`: o
+próprio kernel do host de origem já sabe, antes de mandar qualquer pacote,
+que não tem como chegar lá.
+
+Isso também explica por que o teste teria que provar as duas metades: se os
+segmentos estivessem desligados ou os contêineres fora do ar, o ping também
+falharia — só o par (funciona dentro do segmento **e** falha entre segmentos)
+comprova que o isolamento é real, e não um efeito colateral de algo quebrado.
