@@ -1,14 +1,22 @@
 #!/bin/sh
-# CONTRATO (não mude): escreva na saída padrão só o nome da réplica que
-# respondeu e termine com código 0; ou escreva INDISPONIVEL e termine com 1.
-# Nunca demore mais que 5 segundos, mesmo com tudo fora do ar.
-#
-# ---- versão ingênua: uma réplica só. Seu trabalho é substituir isto. ----
-REPLICAS="10.0.20.21"
+# Escreve o nome de uma replica que respondeu ou INDISPONIVEL.
+# O tempo total das tentativas deve permanecer abaixo de 5 segundos.
 
-for ip in $REPLICAS; do
-  r=$(curl -s -m 1 "http://$ip:8080/" 2>/dev/null)
-  if [ -n "$r" ]; then echo "$r"; exit 0; fi
+for entrada in \
+  "10.0.20.21:replica1" \
+  "10.0.20.22:replica2" \
+  "10.0.20.23:replica3"
+do
+  ip=${entrada%%:*}
+  nome=${entrada#*:}
+
+  resposta=$(curl -fsS --max-time 1 "http://$ip:8080/" 2>/dev/null) || resposta=""
+
+  if [ "$resposta" = "$nome" ]; then
+    printf '%s\n' "$nome"
+    exit 0
+  fi
 done
-echo INDISPONIVEL
+
+printf '%s\n' "INDISPONIVEL"
 exit 1

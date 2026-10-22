@@ -167,3 +167,6 @@ comprova que o isolamento é real, e não um efeito colateral de algo quebrado.
 ## Entrega 2 — O roteador e o encapsulamento
 
 Quando um pacote passa por um roteador, o **endereço IP não muda**, pois ele identifica a origem e o destino do pacote durante o caminho. Já o **endereço MAC muda**, porque o quadro Ethernet é refeito a cada segmento da rede. Na E2, isso foi comprovado pelas capturas: o IP de origem permaneceu `10.0.10.10` nas duas pernas do roteador, enquanto o MAC de origem mudou. O TTL também passou de 64 para 63, mostrando que o pacote realmente passou pelo roteador.
+## Entrega 3 — Réplicas e falhas
+
+O cliente não consegue distinguir uma réplica que parou de funcionar de uma réplica que está ligada, mas perdeu a comunicação com a rede. Nos dois casos, ele pode considerar a réplica inacessível e tentar outra. Isso permite que o serviço continue funcionando enquanto houver uma réplica acessível. Quando nenhuma réplica pode ser alcançada, o cliente informa `INDISPONIVEL` sem ficar travado.
